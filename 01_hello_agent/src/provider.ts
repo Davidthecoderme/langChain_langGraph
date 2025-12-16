@@ -91,3 +91,28 @@ async function helloGroq(): Promise<HelloOutput> {
         message: String(content).trim()
     };
 }
+
+export async function selectAndHello(): Promise<HelloOutput> {
+
+    const forced = (process.env.PROVIDER || "").toLowerCase();
+
+    if (forced == 'gemini') return helloGemini();
+    if (forced == 'groq') return helloGroq();
+
+    if (forced) throw new Error(`use wrong provider ${forced}`)
+    
+    
+    if (process.env.GOOGLE_API_KEY) { 
+        try {
+            return await helloGemini();
+        } catch(error) { }
+    }
+    if (process.env.GROQ_API_KEY) { 
+        try {
+            return await helloGroq();
+        } catch(error) { }
+    }
+
+    throw new Error("No provider provided")
+ 
+}
