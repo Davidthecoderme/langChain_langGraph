@@ -1,5 +1,5 @@
 npm i zod 
 npm i @langchain/groq @langchain/openai  @langchain/google-genai
 npm i express cors
- 
+npm i --save-dev @types/express @types/cors
 
