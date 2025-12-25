@@ -23,6 +23,7 @@ export const OpenUrlOuputSchema = z.object({
 export const SummarizeInputSchema = z.object({
     url: z.url(),
     content: z.string().min(50, 'need a bit more content to summarize'),
+    text: z.string().min(1),
 })
 
 export const SummarizeOutputSchema = z.object({

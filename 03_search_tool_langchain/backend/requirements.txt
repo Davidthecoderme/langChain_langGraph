@@ -1,0 +1,6 @@
+npm i zod 
+npm i @langchain/groq @langchain/openai  @langchain/google-genai 
+npm i express cors
+npm i --save-dev @types/express @types/cors
+npm i html-to-text
+npm i --save-dev @types/html-to-text
