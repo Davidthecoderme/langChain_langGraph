@@ -30,4 +30,10 @@ export const SummarizeOutputSchema = z.object({
     summary: z.string().min(1), 
 })
 
+export const SearchInputSchema = z.object({
+    q: z.string().min(5, 'query cannot be empty'),
+})
+
+export type searchInput = z.infer<typeof SearchInputSchema>; 
+
 
