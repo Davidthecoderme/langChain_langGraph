@@ -13,7 +13,9 @@ export const directBasePath = RunnableLambda.from(
             
                 [
                     "You answer briefly and clearly for beginners",
-                    "if unsure, say so"
+                    "if unsure, say so",
+                    "Limit your answer to 6-10 sentences.",
+                    "Keep it under 200-300 words."
 
                 ].join("\n")
 
