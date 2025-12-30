@@ -1,7 +1,10 @@
-import { RunnableLambda } from "@langchain/core/runnables";
+import { RunnableLambda, RunnableSequence } from "@langchain/core/runnables";
 import { webSearch } from "../utils/webSearch";
 import { openUrl } from "../utils/openUrl";
 import { summarize } from "../utils/summarize";
+import { candidate } from "./types";
+import { getChatModel } from "../shared/models";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 // top 10 universities in the world  ? 
 // 1 search the web -> 2 visit every result page -> 3 summarize -> 4 return the candidate, sources, mode 
@@ -129,3 +132,86 @@ export const openAndSummarizeStep = RunnableLambda.from(
         }
     }
 )
+
+
+export const composeStep = RunnableLambda.from(
+    async(input: {
+        q: string;
+        pageSummaries: Array<{url: string , summary: string}>;
+        mode: 'web' | 'direct';
+        fallback: 'no results' | 'none' | 'snippets';
+    }) : Promise<candidate> =>{
+        const model =  getChatModel({temperature: 0.2});
+
+        // 如果没有任何网页摘要，就走 direct：直接把问题问给模型
+        if(!input.pageSummaries || input.pageSummaries.length === 0){
+            const directResponseFromModel = await model.invoke([
+                // 系统提示：让模型简洁、面向新手；不确定就说明不确定
+                new SystemMessage(
+                    [
+                        "You answer briefly and clearly for beginners",
+                        "if unsure, say so"
+
+                    ].join("\n")
+                ),
+                new HumanMessage(input.q)
+            ]);
+
+            // 统一把模型输出转成 string
+            const directAns = (
+                typeof directResponseFromModel.content === 'string' ? 
+                directResponseFromModel.content : String(directResponseFromModel.content)
+            ).trim();
+
+            // 返回 candidate（direct 模式没有 sources）
+            return ({
+                answer: directAns,
+                source: [],
+                mode: 'direct'
+
+            })
+
+        }
+
+        // 有网页摘要：走 web 模式，让模型根据 summaries 回答问题
+        const res = await model.invoke([
+            new SystemMessage(
+                [
+                    "You concisely answer the question using the provided summaries",
+                    "Rules:",
+                    "- Be factual and neutral. do not add your own opinions.",
+                    "- 5-8 sentences max.",
+                    "- Use only provided summarie; Do not invent new facts;",
+                ].join("\n")
+            ),
+            new HumanMessage(
+                [
+                    `Question: ${input.q}` ,
+                    "Summaries:",
+                    // 把 summaries 以 JSON 格式给模型，方便它结构化阅读
+                    JSON.stringify(input.pageSummaries, null , 2)
+                ].join("\n")
+            )
+        ]);
+
+        // 提取所有来源 URL
+        const url = input.pageSummaries.map(x => x.url);
+
+        // 模型最终回答
+        const finalAns = typeof res.content === 'string' ? res.content : String(res.content);
+
+        return ({
+            answer: finalAns,
+            source: url,
+            mode: 'web'
+        })
+
+    }
+)
+
+// 把 web 模式的 3 个步骤串成一个完整流水线：search → open+summarize → compose final answer
+export const webBasePath = RunnableSequence.from([
+    webSearchStep,
+    openAndSummarizeStep,
+    composeStep
+]) 
