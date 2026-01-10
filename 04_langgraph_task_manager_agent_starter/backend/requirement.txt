@@ -1,0 +1,1 @@
+npm install langchain @langchain/core @langchain/langgraph @langchain/openai openai
