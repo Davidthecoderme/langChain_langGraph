@@ -35,11 +35,11 @@ import { State } from "../types";
  */
 
 
-type NodeContext = {
-    interrupt : (payload: unknown) => Promise<unknown>
-}
+// type NodeContext = {
+//     interrupt : (payload: unknown) => Promise<unknown>
+// }
 
-export async function approveNode(state: State , context : NodeContext) : Promise<Partial<State>>{
+export async function approveNode(state: State , context : any) : Promise<Partial<State>>{
 
     if(state.status === 'cancelled') return {}
 
@@ -63,11 +63,10 @@ export async function approveNode(state: State , context : NodeContext) : Promis
    */
     const interrupt = context?.interrupt as (payload: unknown) => Promise<unknown>;
 
-    // Normalize the decision into a boolean.
-    const decision = await interrupt({
-        type: 'approval_request',
-        steps
-    })
+     const decision = await interrupt({
+        type: "approval_request",
+        steps,
+    });
 
     const approved = typeof decision === "object" && decision !== null && "approve" in decision
         ? Boolean((decision as any).approve)

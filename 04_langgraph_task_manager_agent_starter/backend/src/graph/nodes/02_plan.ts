@@ -74,7 +74,7 @@ function firstTakenN(arr: string[] , n: number) {
  * - approveNode => pauses and asks the user to approve steps
  * - executeNode => runs steps and fills results[]
  */
-export async function PlanFromTaskDescription(state: State): Promise<Partial<State>> {
+export async function PlanFromTaskDescriptionNode(state: State): Promise<Partial<State>> {
     if(state.status === 'cancelled') return {};
 
 
