@@ -53,7 +53,8 @@ export async function finalizeNode(state: State): Promise<Partial<State>> {
         : currStatus === "cancelled" || !approved
             ? "cancelled"
             : "done";
-
+            
+    // Build a final user-facing message.
     const message =
         state.message ??
         (finalStatus === "cancelled"
