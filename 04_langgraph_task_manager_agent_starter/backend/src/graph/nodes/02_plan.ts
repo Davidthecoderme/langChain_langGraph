@@ -2,6 +2,8 @@ import {z} from 'zod';
 import {ChatGroq} from '@langchain/groq';
 import {env} from '../../utils/env';
 import { State } from '../types';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 
 
 
@@ -28,12 +30,14 @@ export const PlanSchema = z.object({
 
 export type Plan = z.infer<typeof PlanSchema>;
 
-function makeModel() {
-    return new ChatGroq({
-        apiKey: env.GROQ_API_KEY,
-        model: env.GROQ_MODEL,
-        temperature: 0.2,
-    })
+export function getChatModel(provider: "groq" | "openai" | "gemini") {
+  if (provider === "groq") {
+    return new ChatGroq({ apiKey: env.GROQ_API_KEY, model: env.GROQ_MODEL, temperature: 0.2 });
+  }
+  if (provider === "openai") {
+    return new ChatOpenAI({ apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL, temperature: 0.2 });
+  }
+  return new ChatGoogleGenerativeAI({ apiKey: env.GOOGLE_API_KEY, model: env.GEMINI_MODEL, temperature: 0.2 });
 }
 
 
@@ -78,7 +82,7 @@ export async function PlanFromTaskDescriptionNode(state: State): Promise<Partial
     if(state.status === 'cancelled') return {};
 
 
-    const model = makeModel(); 
+    const model = getChatModel(env.PROVIDER); 
 
     const structure = model.withStructuredOutput(PlanSchema);
 
@@ -94,7 +98,7 @@ export async function PlanFromTaskDescriptionNode(state: State): Promise<Partial
             ].join('\n')
         },
         {
-            role: 'USER',
+            role: 'human',
             content: userPromptTemplate(state.input)  
         }
     ]);
