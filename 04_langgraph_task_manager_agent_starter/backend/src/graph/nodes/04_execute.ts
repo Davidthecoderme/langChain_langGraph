@@ -2,6 +2,9 @@ import { ChatGroq } from '@langchain/groq';
 import {z} from 'zod'
 import { env } from '../../utils/env';
 import { State } from '../types';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+
 
 
 /**
@@ -34,12 +37,14 @@ const ExecutionNotesSchema = z.object({
 
 type ExecutionNotes = z.infer<typeof ExecutionNotesSchema>;
 
-function makemodel(){
-    return new ChatGroq({
-        apiKey:env.GROQ_API_KEY,
-        model: env.GROQ_MODEL,
-        temperature:0.2,
-    })
+export function getChatModel(provider: "groq" | "openai" | "gemini") {
+  if (provider === "groq") {
+    return new ChatGroq({ apiKey: env.GROQ_API_KEY, model: env.GROQ_MODEL, temperature: 0.2 });
+  }
+  if (provider === "openai") {
+    return new ChatOpenAI({ apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL, temperature: 0.2 });
+  }
+  return new ChatGoogleGenerativeAI({ apiKey: env.GOOGLE_API_KEY, model: env.GEMINI_MODEL, temperature: 0.2 });
 }
 
 // Build a human prompt
@@ -67,7 +72,7 @@ export async function executeNode( state: State ) : Promise<Partial<State>>{
         return {}
     }
 
-    const model = makemodel()
+    const model = getChatModel(env.PROVIDER);
 
     const structured = model.withStructuredOutput(ExecutionNotesSchema);
 
